@@ -232,7 +232,9 @@ namespace Extensions
 
         public static float GetFloatFromByteArrDemo(this byte[] origNumArr, int startBit, EByteOrder byteOrder)
         {
-            int convertedNum = origNumArr.GetIntFromByteArr(startBit, IEEE754_LENGTH, EValueType.Unsigned, byteOrder);
+            uint convertedNum = (uint) origNumArr.GetIntFromByteArr(startBit, IEEE754_LENGTH, EValueType.Unsigned, byteOrder);
+
+            //uint convertedNum = (uint) convertedNum;
 
             int currentBitIndex = IEEE754_LENGTH - 1;
 
@@ -243,13 +245,13 @@ namespace Extensions
                 bNegative = true;
             }
 
-            int exponentCount = ((convertedNum & 0x7F800000) >> FRACTION_LENGTH) - BIAS;
+            uint exponentCount = ((convertedNum & 0x7F800000) >> FRACTION_LENGTH) - BIAS;
 
-            int integerPart = convertedNum >> (FRACTION_LENGTH - exponentCount);
-            integerPart <<= (IEEE754_LENGTH - exponentCount);
-            integerPart >>= (IEEE754_LENGTH - exponentCount);
+            uint integerPart = convertedNum >> (int)(FRACTION_LENGTH - exponentCount);
+            integerPart <<= (int)(IEEE754_LENGTH - exponentCount);
+            integerPart >>= (int)(IEEE754_LENGTH - exponentCount);
 
-
+            integerPart |= (uint)(1 << (int)exponentCount);
 
             return 0;
 
