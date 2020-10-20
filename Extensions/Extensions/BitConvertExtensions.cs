@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Xml;
 
 namespace Extensions
 {
@@ -25,8 +24,12 @@ namespace Extensions
 
         private const int BIAS = 127;
         private const int IEEE754_LENGTH = 32;
+        private const int SIGN_LENGTH = 1;
         private const int EXPONENT_LENGTH = 8;
         private const int FRACTION_LENGTH = 23;
+
+        private const uint MSB_MASK = 0x80000000;
+        private const uint EXPONENT_MASK = 0x7F800000;
 
         #endregion
 
@@ -37,7 +40,7 @@ namespace Extensions
         /// </summary>
         public static bool CheckNumberPowerOfTwo(int num)
         {
-            if(num < 0)
+            if (num < 0)
             {
                 return false;
             }
@@ -66,9 +69,9 @@ namespace Extensions
             int currentIndex = startBit / 8;
             int bitCount = startBit;
 
-            while(inputCount < length)
+            while (inputCount < length)
             {
-                if((currentIndex != bitCount / 8) && byteOrder == EByteOrder.Motorola)
+                if ((currentIndex != bitCount / 8) && byteOrder == EByteOrder.Motorola)
                 {
                     bitCount -= 16;
                 }
@@ -196,41 +199,71 @@ namespace Extensions
         /// </summary>
         public static float GetFloatFromByteArr(this byte[] origNumArr, int startBit, EByteOrder byteOrder)
         {
-            uint convertedNum = (uint) origNumArr.GetIntFromByteArr(startBit, IEEE754_LENGTH, EValueType.Unsigned, byteOrder);
+            uint convertedNum = (uint)origNumArr.GetIntFromByteArr(startBit, IEEE754_LENGTH, EValueType.Unsigned, byteOrder);
 
             bool bSigned = false;
-            
-            if((convertedNum & 0x80000000) == 0x80000000)
+
+            if ((convertedNum & MSB_MASK) == MSB_MASK)
             {
                 bSigned = true;
             }
 
-            uint exponentCount = ((convertedNum & 0x7F800000) >> FRACTION_LENGTH) - BIAS;
+            int exponentCount = (int)((convertedNum & EXPONENT_MASK) >> FRACTION_LENGTH) - BIAS;
 
-            uint integerPart = convertedNum >> (int)(FRACTION_LENGTH - exponentCount);
-            integerPart <<= (int)(IEEE754_LENGTH - exponentCount);
-            integerPart >>= (int)(IEEE754_LENGTH - exponentCount);
-            integerPart |= (uint)(1 << (int)exponentCount);
+            uint integerPart = 0;
+
+            if (exponentCount >= 0 && exponentCount < FRACTION_LENGTH)
+            {
+                integerPart = convertedNum >> FRACTION_LENGTH - exponentCount;
+                integerPart <<= IEEE754_LENGTH - exponentCount;
+                integerPart >>= IEEE754_LENGTH - exponentCount;
+                integerPart |= (uint)(1 << exponentCount);
+            }
+            else if(exponentCount >= 0 && exponentCount >= FRACTION_LENGTH)
+            {
+                integerPart = convertedNum << IEEE754_LENGTH - FRACTION_LENGTH;
+                integerPart >>= SIGN_LENGTH + EXPONENT_LENGTH;
+
+                uint tempResult = 1;
+
+                for (int i = exponentCount - FRACTION_LENGTH; i <= exponentCount; i++)
+                {
+                    tempResult *= integerPart;
+
+                    if(tempResult > 0xFFFFFFF)
+                    {
+                        return float.MaxValue;
+                    }
+                }
+
+                integerPart = tempResult;
+            }
 
             float tempNumber = 1f;
             float mantissaPart = 0f;
 
-            for (int i = IEEE754_LENGTH -1 - EXPONENT_LENGTH - (int)exponentCount -1; i >= 0; i--)
+            for (int i = IEEE754_LENGTH - SIGN_LENGTH - EXPONENT_LENGTH - exponentCount - 1; i >= 0; i--)
             {
                 tempNumber /= 2f;
 
-                int targetPoint = 1 << i;
-                int tempBitResult = (int) convertedNum & targetPoint;
+                if(exponentCount < 0 && i >IEEE754_LENGTH - 1 - EXPONENT_LENGTH)
+                {
+                    continue;
+                }
 
-                if(tempBitResult == targetPoint)
+                int targetPoint = 1 << i; ;
+
+                int tempBitResult = (int)convertedNum & targetPoint;
+
+                if (tempBitResult == targetPoint)
                 {
                     mantissaPart += tempNumber;
                 }
             }
 
             float finalFloatValue = integerPart + mantissaPart;
-             
-            if(bSigned)
+
+            if (bSigned)
             {
                 finalFloatValue *= -1;
             }
@@ -245,7 +278,7 @@ namespace Extensions
 
         private static void ValidateOverflowForInt(int startBit, int length)
         {
-            if(startBit > 32 || length > 32 || startBit + length > 32)
+            if (startBit > 32 || length > 32 || startBit + length > 32)
             {
                 throw new StackOverflowException($"Stack Over Flow Exception startBit : {startBit} / length : {length}");
             }
@@ -257,16 +290,16 @@ namespace Extensions
 
         #region int to byte[]
 
-            //int inputByteLength = (length / 8) + 1;
+        //int inputByteLength = (length / 8) + 1;
 
-            //byte[] inputNumArr = new byte[inputByteLength];
+        //byte[] inputNumArr = new byte[inputByteLength];
 
-            //for (int i = 0; i < inputNumArr.Length; i++)
-            //{
-            //    inputNumArr[i] = (byte)((inputNum >> ((inputNumArr.Length - i - 1) * 8)) & 0xFF);
-            //}
+        //for (int i = 0; i < inputNumArr.Length; i++)
+        //{
+        //    inputNumArr[i] = (byte)((inputNum >> ((inputNumArr.Length - i - 1) * 8)) & 0xFF);
+        //}
 
-            #endregion
+        #endregion
         [Obsolete("Deprecated", true)]
         private static byte[] GetBitChangedByteArrDemo(this byte[] origNumArr, int startBit, int length, int inputNum)
         {

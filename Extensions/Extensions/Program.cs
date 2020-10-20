@@ -45,9 +45,14 @@ namespace Extensions
             //floatByte = new byte[] { 0x00, 0x40, 0xED, 0xC2 };
 
             float a = -118.625f;
-            float b = floatByte.GetFloatFromByteArrDemo(24, EByteOrder.Motorola);
+            float b = floatByte.GetFloatFromByteArr(24, EByteOrder.Motorola);
 
-
+            floatByte = new byte[] { 0x49, 0x74, 0x23, 0xf0 };
+            //0x33d6bf95
+            //0x6aa56fa6
+            //0x4b18967f
+            //0x497423f0
+            floatByte.GetFloatFromByteArr(24, EByteOrder.Motorola);
 
         }
     }
