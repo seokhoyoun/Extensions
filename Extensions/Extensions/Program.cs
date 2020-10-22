@@ -6,7 +6,7 @@ namespace Extensions
 {
     class Program
     {
-        static void Main(string[] args)
+        static void Main()
         {
             string result = "I'm happy";
             byte[] utfstr = new byte[] { 0xE4, 0xA4, 0xA7, 0xE6, 0xB4, 0xA0, 0xE6, 0xA1, 0xA1, 0xE7, 0x81, 0xB0, 0x79 };
@@ -32,11 +32,11 @@ namespace Extensions
             byte[] testByteArr = new byte[] { 0xBB, 0xAA, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 
             byte[] changedByteArr = testByteArr.SetIntToByteArr(8, 16, -444, EByteOrder.Motorola);
-            Debug.Assert( changedByteArr.GetIntFromByteArr(8, 16, EValueType.Signed, EByteOrder.Motorola) == -444);
+            Debug.Assert( changedByteArr.GetIntFromByteArr(8, 16, EValueType.SignedValue, EByteOrder.Motorola) == -444);
 
             changedByteArr = changedByteArr.SetIntToByteArr(23, 16, -444, EByteOrder.Motorola);
 
-            Debug.Assert(changedByteArr.GetIntFromByteArr(23, 16, EValueType.Signed, EByteOrder.Motorola) == -444);
+            Debug.Assert(changedByteArr.GetIntFromByteArr(23, 16, EValueType.SignedValue, EByteOrder.Motorola) == -444);
 
             //nt testNum = 0x1FFFFFFF;
 
@@ -44,7 +44,7 @@ namespace Extensions
             byte[] floatByte = new byte[] { 0xc2, 0xed, 0x40, 0x00 };
             //floatByte = new byte[] { 0x00, 0x40, 0xED, 0xC2 };
 
-            float a = -118.625f;
+            //float a = -118.625f;
             float b = floatByte.GetFloatFromByteArr(24, EByteOrder.Motorola);
 
             floatByte = new byte[] { 0x49, 0x74, 0x23, 0xf0 };

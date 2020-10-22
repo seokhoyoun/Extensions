@@ -12,8 +12,8 @@ namespace Extensions
 
     public enum EValueType
     {
-        Signed,
-        Unsigned
+        SignedValue,
+        UnsignedValue
     }
 
     #endregion
@@ -58,6 +58,11 @@ namespace Extensions
         /// </summary>  
         public static byte[] SetIntToByteArr(this byte[] origNumArr, int startBit, int length, int inputNum, EByteOrder byteOrder)
         {
+            if (origNumArr == null)
+            {
+                throw new NullReferenceException();
+            }
+
             byte[] changedByteArr = new byte[origNumArr.Length];
 
             for (int i = 0; i < changedByteArr.Length; i++)
@@ -142,6 +147,11 @@ namespace Extensions
         /// </summary>
         public static int GetIntFromByteArr(this byte[] origNumArr, int startBit, int length, EValueType valueType, EByteOrder byteOrder)
         {
+            if (origNumArr == null)
+            {
+                throw new NullReferenceException();
+            }
+
             int readCount = 0;
             int currentIndex = startBit / 8;
             int bitCount = startBit;
@@ -173,7 +183,7 @@ namespace Extensions
                 readCount++;
             }
 
-            if (valueType == EValueType.Signed && length > 1)
+            if (valueType == EValueType.SignedValue && length > 1)
             {
                 // MSB 체크
                 int pointMSB = 1 << length - 1;
@@ -199,7 +209,7 @@ namespace Extensions
         /// </summary>
         public static float GetFloatFromByteArr(this byte[] origNumArr, int startBit, EByteOrder byteOrder)
         {
-            uint convertedNum = (uint)origNumArr.GetIntFromByteArr(startBit, IEEE754_LENGTH, EValueType.Unsigned, byteOrder);
+            uint convertedNum = (uint)origNumArr.GetIntFromByteArr(startBit, IEEE754_LENGTH, EValueType.UnsignedValue, byteOrder);
 
             bool bSigned = false;
 
@@ -387,7 +397,7 @@ namespace Extensions
                 inputIndex++;
             }
 
-            if (valueType == EValueType.Signed && length > 1)
+            if (valueType == EValueType.SignedValue && length > 1)
             {
                 // MSB 체크
                 int pointMSB = 1 << length - 1;
@@ -408,13 +418,13 @@ namespace Extensions
         [Obsolete("Deprecated", true)]
         public static float GetFloatFromByteArrDemo(this byte[] origNumArr, int startBit, EByteOrder byteOrder)
         {
-            int exponentCount = origNumArr.GetIntFromByteArr(startBit + FRACTION_LENGTH, EXPONENT_LENGTH, EValueType.Unsigned, byteOrder) - BIAS;
+            int exponentCount = origNumArr.GetIntFromByteArr(startBit + FRACTION_LENGTH, EXPONENT_LENGTH, EValueType.UnsignedValue, byteOrder) - BIAS;
 
-            int integerPart = origNumArr.GetIntFromByteArr(startBit + FRACTION_LENGTH - exponentCount, exponentCount, EValueType.Unsigned, byteOrder);
+            int integerPart = origNumArr.GetIntFromByteArr(startBit + FRACTION_LENGTH - exponentCount, exponentCount, EValueType.UnsignedValue, byteOrder);
 
             integerPart |= (1 << exponentCount);
 
-            int fractionNum = origNumArr.GetIntFromByteArr(startBit, FRACTION_LENGTH - exponentCount, EValueType.Unsigned, byteOrder);
+            int fractionNum = origNumArr.GetIntFromByteArr(startBit, FRACTION_LENGTH - exponentCount, EValueType.UnsignedValue, byteOrder);
 
             float fractionPart = 0f;
             float tempNumber = 1f;
@@ -435,7 +445,7 @@ namespace Extensions
             float finalResult = integerPart + fractionPart;
 
             // MSB Check
-            if (origNumArr.GetIntFromByteArr(startBit + IEEE754_LENGTH - 1, 1, EValueType.Signed, EByteOrder.Intel) == 1)
+            if (origNumArr.GetIntFromByteArr(startBit + IEEE754_LENGTH - 1, 1, EValueType.SignedValue, EByteOrder.Intel) == 1)
             {
                 finalResult *= -1;
             }
